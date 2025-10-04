@@ -17,6 +17,12 @@ Background - I am JS developer for shit ton of years and have experience in Go. 
 - Clavinet - i have no idea yet how will i model this, i havent found modelling tutorial
 - Simple synth alike OBXD or tal noiseMaker
 
+## Board
+
+![./synth.jpg](./synth.jpg)
+
+Its just ESP32-S3 dev board with two USB-C connectors and PCM5102A. if board just had DAC on itit would be just one board, heh.
+
 ## Steps
 
 ### Finding good board for synth - ✔ 
