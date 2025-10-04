@@ -23,6 +23,8 @@ Background - I am JS developer for shit ton of years and have experience in Go. 
 
 Its just ESP32-S3 dev board with two USB-C connectors and PCM5102A. if board just had DAC on itit would be just one board, heh.
 
+During Arduino tests i confirmed that this setup is sufficient for my purposes.
+
 Overall cost without wires and breadboard - 9$.
 
 ## Steps
@@ -62,6 +64,8 @@ That should be documented, it is kinda universal for all synth engines. Maybe ev
 ### Wiring in polyphonic synth with simple volume\filter envelopes that is controllable by midi - ✖
 
 I want to use external DSP libraries for oscillators, mixers and filters first so i dont need to learn DSP at first while doing overall synth layout. I need simple synth working first.
+
+I will use most of FreeRTOS there for resourse management.
 
 ### Learning how DSP works - ✖
 
