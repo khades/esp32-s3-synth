@@ -23,6 +23,8 @@ Background - I am JS developer for shit ton of years and have experience in Go. 
 
 Its just ESP32-S3 dev board with two USB-C connectors and PCM5102A. if board just had DAC on itit would be just one board, heh.
 
+Overall cost without wires and breadboard - 9$.
+
 ## Steps
 
 ### Finding good board for synth - ✔ 
