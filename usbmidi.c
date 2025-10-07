@@ -4,7 +4,7 @@
  * https://github.com/enudenki/esp32-usb-host-midi-library.git
  * That's naive port to C from a person that doesnt know either C or C++
  */
- 
+
 #include "usbmidi.h"
 
 #include "esp_log.h"

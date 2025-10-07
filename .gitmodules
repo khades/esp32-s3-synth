@@ -1,0 +1,6 @@
+[submodule "clap"]
+	path = clap
+	url = git@github.com:free-audio/clap.git
+[submodule "sine-ping"]
+	path = sine-ping
+	url = git@github.com:khades/sine-ping.git

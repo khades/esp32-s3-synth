@@ -45,10 +45,6 @@ Somehow i managed to port https://github.com/enudenki/esp32-usb-host-midi-librar
 
 I've read C Primer Plus and i have idea what to C code does now.
 
-### Wiring MIDI to Sound - ✖
-
-I did that with Arduino, mapped midi keyboard event to frequency, copypasted simple oscillator and made primitive square-wave monophonic synth with simpliest volume envelope ever. BUT the sound was interrupted by midi reading procedure, so either i had really long reaction time to key press, or i had sound crackling
-
 ### Reading how to use DMA buffers for sound, whats buffers etc - ✖
 
 It seems that's the main idea how that would work, i'll sythesize some sound based on current midi state and time state, write some data ahead, then process midi after that in 1000HZ tick time. 
@@ -56,6 +52,22 @@ It seems that's the main idea how that would work, i'll sythesize some sound bas
 My vague naive idea that there would be some byte buffer or even two of them that i will fill and somehow pass to DMA I2s async write method.
 
 If that's true - i need to make it abstract enough so i can use any DSP library, so i wont write my own oscillators, mixers, revebs from scratch. 
+
+#### What do i know
+
+```i2s_channel_write``` that i use is blocking function for sure, but if i have audio data equal to DMA buffer, then i will have my audio.
+
+For now i will accept that MIDI data will be read after writing to i2s_channel_write. [There's some documentation in here of non-blocking variant](https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/api-reference/peripherals/i2s.html#how-to-prevent-data-lost) and in case of bad cracking or other problems i will use callback interface, but i feel that using blocking function MIGHT be fine.
+
+#### Subgoals
+
+##### Get the calculation of DMA buffer for sound and match it somehow to time domain - ✖
+[Some calculations are there](https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/api-reference/peripherals/i2s.html#how-to-prevent-data-lost)
+
+##### Lookup how time domain is matched to another SDK like LADSPA or Clap - ✖
+### Wiring MIDI to Sound - ✖
+
+I did that with Arduino, mapped midi keyboard event to frequency, copypasted simple oscillator and made primitive square-wave monophonic synth with simpliest volume envelope ever. BUT the sound was interrupted by midi reading procedure, so either i had really long reaction time to key press, or i had sound crackling
 
 ### Writing document with idea about simple HAL or even struct\data pipeline for realtime synth  - ✖
 
