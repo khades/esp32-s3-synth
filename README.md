@@ -61,23 +61,42 @@ For now i will accept that MIDI data will be read after writing to i2s_channel_w
 
 #### Subgoals
 
-##### Get the calculation of DMA buffer for sound and match it somehow to time domain - ✖
+##### Get the calculation of DMA buffer for sound and match it somehow to time domain - ✔
 [Some calculations are there](https://docs.espressif.com/projects/esp-idf/en/latest/esp32s3/api-reference/peripherals/i2s.html#how-to-prevent-data-lost)
 
-##### Lookup how time domain is matched to another SDK like LADSPA or Clap - ✖
-### Wiring MIDI to Sound - ✖
+Its in audio.h
 
-I did that with Arduino, mapped midi keyboard event to frequency, copypasted simple oscillator and made primitive square-wave monophonic synth with simpliest volume envelope ever. BUT the sound was interrupted by midi reading procedure, so either i had really long reaction time to key press, or i had sound crackling
+##### Lookup how time domain is matched to another SDK like LADSPA or Clap - ✔
 
-### Writing document with idea about simple HAL or even struct\data pipeline for realtime synth  - ✖
+With CLAP SDK - by frames
 
-That should be documented, it is kinda universal for all synth engines. Maybe even someone has tutorial about that.
+##### Implement bridge of CLAP float* array of sound into I2S DMA Buffer - ✖
 
-### Wiring in polyphonic synth with simple volume\filter envelopes that is controllable by midi - ✖
+Still no idea about Filling DMA buffer. Somehow PCM format looks the same between CLAP and I2S.
 
-I want to use external DSP libraries for oscillators, mixers and filters first so i dont need to learn DSP at first while doing overall synth layout. I need simple synth working first.
+### ~~Wiring MIDI to Sound - ✖~~
 
-I will use most of FreeRTOS there for resourse management.
+~~I did that with Arduino, mapped midi keyboard event to frequency, copypasted simple oscillator and made primitive square-wave monophonic synth with simpliest volume envelope ever. BUT the sound was interrupted by midi reading procedure, so either i had really long reaction time to key press, or i had sound crackling~~
+
+I will use CLAP SDK, will wrap current USBMIDI events into clap events.
+
+### Write USBMIDI -> CLAP events code
+
+Not that hard
+
+### ~~Writing document with idea about simple HAL or even struct\data pipeline for realtime synth  - ✖~~
+
+~~That should be documented, it is kinda universal for all synth engines. Maybe even someone has tutorial about that.~~
+
+I will use CLAP SDK.
+
+### ~~Wiring in polyphonic synth with simple volume\filter envelopes that is controllable by midi - ✖~~
+
+~~I want to use external DSP libraries for oscillators, mixers and filters first so i dont need to learn DSP at first while doing overall synth layout. I need simple synth working first.~~
+
+~~I will use most of FreeRTOS there for resourse management.~~
+
+I took simple CLAP plugin written in C and i will integrate it into the board by implementing CLAP-like host. As outcome i will have CLAP plugin that i can build into the controller AND on PC so i will develop stuff on PC.
 
 ### Learning how DSP works - ✖
 
