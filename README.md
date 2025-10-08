@@ -80,7 +80,7 @@ Still no idea about Filling DMA buffer. Somehow PCM format looks the same betwee
 
 I will use CLAP SDK, will wrap current USBMIDI events into clap events.
 
-### Write USBMIDI -> CLAP events code
+### Write USBMIDI -> CLAP events code - ✖
 
 Not that hard
 
