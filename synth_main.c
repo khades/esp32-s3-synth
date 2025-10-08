@@ -5,7 +5,6 @@
 #include "plugin-host.h"
 #include "sound.h"
 #include "usbmidi.h"
-
 static const char *TAG = "MAIN";
 
 struct UsbMidi midi;
@@ -71,7 +70,7 @@ void app_main(void) {
   plugins_init();
   plugins_activate(SAMPLE_RATE);
 
-  float *output[FRAME_SIZE_FOR_ALL_CHANNELS];
+  float *output[FRAME_SIZE_FOR_ALL_CHANNELS] = {};
   size_t written = 0;
   while (1) {
     plugins_process(NULL, output);

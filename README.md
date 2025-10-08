@@ -74,6 +74,9 @@ With CLAP SDK - by frames
 
 Still no idea about Filling DMA buffer. Somehow PCM format looks the same between CLAP and I2S.
 
+[Good example](https://github.com/infrasonicaudio/esp32-i2s-synth-example/blob/main/main/i2s_example_main.c)
+
+
 ### ~~Wiring MIDI to Sound - ✖~~
 
 ~~I did that with Arduino, mapped midi keyboard event to frequency, copypasted simple oscillator and made primitive square-wave monophonic synth with simpliest volume envelope ever. BUT the sound was interrupted by midi reading procedure, so either i had really long reaction time to key press, or i had sound crackling~~
@@ -82,7 +85,8 @@ I will use CLAP SDK, will wrap current USBMIDI events into clap events.
 
 ### Write USBMIDI -> CLAP events code - ✖
 
-Not that hard
+Not that hard. Good example of writing linked list with memory free.
+
 
 ### ~~Writing document with idea about simple HAL or even struct\data pipeline for realtime synth  - ✖~~
 

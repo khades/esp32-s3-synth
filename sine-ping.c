@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 static const char *TAG = "PLUGIN_WRAPPER";
+#define CONFIG_ESP_SYSTEM_PANIC CONFIG_ESP_SYSTEM_PANIC_PRINT_HALT
 
 // CLAP descriptor.
 // mostly a copy of sine-ping.c, just creating another variablename
@@ -52,8 +53,6 @@ static const clap_plugin_factory_t factory = {
 // CLAP entry.
 
 bool init(const char *path) {
-  ESP_LOGI(TAG, "INIT FIRST");
-
   Streams_init();
   return true;
 }
