@@ -3,6 +3,8 @@
 
 #include "driver/i2s_common.h"
 
+// EVERYTHING IS WRONG GO READ
+// https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/peripherals/i2s.html#application-notes
 #define SAMPLE_RATE 48000
 #define AUDIO_BITS I2S_DATA_BIT_WIDTH_32BIT
 #define AUDIO_CHANNELS I2S_SLOT_MODE_STEREO

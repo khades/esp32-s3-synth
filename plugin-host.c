@@ -82,41 +82,60 @@ void plugins_activate(double sample_rate
 
 uint32_t returnZero(const struct clap_input_events *list) { return 0; };
 
+uint32_t returnOne(const struct clap_input_events *list) { return 1; };
+
 const clap_event_header_t *get(const struct clap_input_events *list,
                                uint32_t index) {
   return NULL;
 }
+const clap_event_header_t keypress = {
+
+};
+
+// TODO
+// proper midi struct, should be coming from args
+// honestly should be its own package
+const clap_input_events_t events = {
+    NULL,
+    returnZero,
+    get,
+};
 
 void plugins_process(clap_input_events_t *in_events, float **output) {
-  float *soundBuffer[FRAME_SIZE_FOR_ALL_CHANNELS] = {};
+  float left[FRAME_SIZE];
+  float right[FRAME_SIZE];
 
-  const clap_audio_buffer_t in = {.data32 = soundBuffer,
-                                  .data64 = NULL,
-                                  .channel_count = 2,
-                                  .latency = 0,
-                                  .constant_mask = 0};
+  float *soundBuffer[AUDIO_CHANNELS] = {left, right};
+  memcpy(soundBuffer[0], output[0], FRAME_SIZE);
+  memcpy(soundBuffer[1], output[1], FRAME_SIZE);
 
-  clap_audio_buffer_t out = {.data32 = output,
-                             .data64 = NULL,
-                             .channel_count = 2,
-                             .latency = 0,
-                             .constant_mask = 0};
-  // TODO
-  // proper midi struct, should be coming from args
-  // honestly should be its own package
-  const clap_input_events_t events = {
-      NULL,
-      returnZero,
-      get,
-  };
+  const clap_audio_buffer_t inputBuffer[1] = {{.data32 = soundBuffer,
+                                               .data64 = NULL,
+                                               .channel_count = AUDIO_CHANNELS,
+                                               .latency = 0,
+                                               .constant_mask = 0}};
+
+  clap_audio_buffer_t outputBuffer[1] = {{.data32 = output,
+                                          .data64 = NULL,
+                                          .channel_count = AUDIO_CHANNELS,
+                                          .latency = 0,
+                                          .constant_mask = 0}};
+
+  // ESP_LOGD(TAG, "Plugin host output pointer in clap is at address: %p",
+  //          outputBuffer[0].data32);
+  // ESP_LOGD(TAG, "Plugin host output buffer pointer is at address: %p",
+  //          outputBuffer[0]);
+  // ESP_LOGD(TAG, "Plugin host output buffer pointer is at address: %p",
+  //          outputBuffer);
+
   const clap_process_t process = {
       .steady_time = -1,
       .frames_count = FRAME_SIZE,
       .transport = NULL,
-      .audio_inputs = &in,
-      .audio_outputs = &out,
-      .audio_inputs_count = 2,
-      .audio_outputs_count = 2,
+      .audio_inputs = inputBuffer,
+      .audio_outputs = outputBuffer,
+      .audio_inputs_count = 1,
+      .audio_outputs_count = 1,
       .in_events = &events,
       // TODO
       // if i do some arp
@@ -130,6 +149,7 @@ void plugins_process(clap_input_events_t *in_events, float **output) {
     // Upper poiners are unobviously broken for me
     pluginRegistry[i]->process(pluginRegistry[i], &process);
     // copying output to input so we proceed  processing
-    memcpy(soundBuffer, output, FRAME_SIZE_FOR_ALL_CHANNELS);
+    memcpy(soundBuffer[0], output[0], FRAME_SIZE);
+    memcpy(soundBuffer[1], output[1], FRAME_SIZE);
   }
 }

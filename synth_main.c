@@ -70,16 +70,28 @@ void app_main(void) {
   plugins_init();
   plugins_activate(SAMPLE_RATE);
 
-  float *output[FRAME_SIZE_FOR_ALL_CHANNELS] = {};
+  float left[FRAME_SIZE];
+  float right[FRAME_SIZE];
+
+  float *output[AUDIO_CHANNELS] = {left, right};
+  float adaptedOutput[FRAME_SIZE_FOR_ALL_CHANNELS];
+
   size_t written = 0;
   while (1) {
+    // UsbMidi_update(&midi);
+
     plugins_process(NULL, output);
 
-    UsbMidi_update(&midi);
+    for (int i = 0; i < FRAME_SIZE; i++) {
+      adaptedOutput[i * 2] = left[i];
+      adaptedOutput[i * 2 + 1] = right[i];
+    }
 
-    i2s_channel_write(tx_handle, output, FRAME_SIZE_FOR_ALL_CHANNELS, &written,
+    i2s_channel_write(tx_handle, adaptedOutput,
+                      FRAME_SIZE_FOR_ALL_CHANNELS * sizeof(float), &written,
                       20);
-
+    // ESP_LOGI(TAG, "Written %d bytes", written);
+    // writes 512
     vTaskDelay(1);
   }
 }
