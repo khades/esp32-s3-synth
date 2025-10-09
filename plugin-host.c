@@ -102,12 +102,12 @@ const clap_input_events_t events = {
 };
 
 void plugins_process(clap_input_events_t *in_events, float **output) {
-  float left[FRAME_SIZE];
-  float right[FRAME_SIZE];
+  float left[MONO_FRAMES_TO_RENDER];
+  float right[MONO_FRAMES_TO_RENDER];
 
   float *soundBuffer[AUDIO_CHANNELS] = {left, right};
-  memcpy(soundBuffer[0], output[0], FRAME_SIZE);
-  memcpy(soundBuffer[1], output[1], FRAME_SIZE);
+  memcpy(soundBuffer[0], output[0], MONO_FRAMES_TO_RENDER);
+  memcpy(soundBuffer[1], output[1], MONO_FRAMES_TO_RENDER);
 
   const clap_audio_buffer_t inputBuffer[1] = {{.data32 = soundBuffer,
                                                .data64 = NULL,
@@ -130,7 +130,7 @@ void plugins_process(clap_input_events_t *in_events, float **output) {
 
   const clap_process_t process = {
       .steady_time = -1,
-      .frames_count = FRAME_SIZE,
+      .frames_count = MONO_FRAMES_TO_RENDER,
       .transport = NULL,
       .audio_inputs = inputBuffer,
       .audio_outputs = outputBuffer,
@@ -149,7 +149,7 @@ void plugins_process(clap_input_events_t *in_events, float **output) {
     // Upper poiners are unobviously broken for me
     pluginRegistry[i]->process(pluginRegistry[i], &process);
     // copying output to input so we proceed  processing
-    memcpy(soundBuffer[0], output[0], FRAME_SIZE);
-    memcpy(soundBuffer[1], output[1], FRAME_SIZE);
+    memcpy(soundBuffer[0], output[0], MONO_FRAMES_TO_RENDER);
+    memcpy(soundBuffer[1], output[1], MONO_FRAMES_TO_RENDER);
   }
 }

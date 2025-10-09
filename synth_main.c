@@ -70,11 +70,11 @@ void app_main(void) {
   plugins_init();
   plugins_activate(SAMPLE_RATE);
 
-  float left[FRAME_SIZE];
-  float right[FRAME_SIZE];
+  float left[MONO_FRAMES_TO_RENDER];
+  float right[MONO_FRAMES_TO_RENDER];
 
   float *output[AUDIO_CHANNELS] = {left, right};
-  float adaptedOutput[FRAME_SIZE_FOR_ALL_CHANNELS];
+  float adaptedOutput[STEREOFRAMES_TO_RENDER];
 
   size_t written = 0;
   while (1) {
@@ -82,16 +82,15 @@ void app_main(void) {
 
     plugins_process(NULL, output);
 
-    for (int i = 0; i < FRAME_SIZE; i++) {
-      adaptedOutput[i * 2] = left[i];
-      adaptedOutput[i * 2 + 1] = right[i];
+    for (int i = 0; i < MONO_FRAMES_TO_RENDER; i++) {
+      adaptedOutput[i] = left[i];
+      adaptedOutput[i + MONO_FRAMES_TO_RENDER] = right[i];
     }
 
     i2s_channel_write(tx_handle, adaptedOutput,
-                      FRAME_SIZE_FOR_ALL_CHANNELS * sizeof(float), &written,
-                      20);
-    // ESP_LOGI(TAG, "Written %d bytes", written);
+                      STEREOFRAMES_TO_RENDER * sizeof(float), &written, 20);
+    ESP_LOGI(TAG, "Written %d bytes", written);
     // writes 512
-    vTaskDelay(1);
+    // vTaskDelay(1);
   }
 }
