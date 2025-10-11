@@ -78,19 +78,22 @@ void app_main(void) {
 
   size_t written = 0;
   while (1) {
-    // UsbMidi_update(&midi);
+    UsbMidi_update(&midi);
 
     plugins_process(NULL, output);
-
+    // I have no idea, will skip it for now
+    // https://github.com/parabuzzle/esp-idf-simple-audio-player/tree/main
+    // https://esp32.com/viewtopic.php?t=8234
+    // https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/peripherals/i2s.html
     for (int i = 0; i < MONO_FRAMES_TO_RENDER; i++) {
-      adaptedOutput[i] = left[i];
-      adaptedOutput[i + MONO_FRAMES_TO_RENDER] = right[i];
+      adaptedOutput[2 * i] = left[i + 1];
+      adaptedOutput[2 * i + 1] = right[i + 1];
     }
 
-    i2s_channel_write(tx_handle, adaptedOutput,
-                      STEREOFRAMES_TO_RENDER * sizeof(float), &written, 20);
-    ESP_LOGI(TAG, "Written %d bytes", written);
+    i2s_channel_write(tx_handle, adaptedOutput, sizeof(adaptedOutput), &written,
+                      20);
+    // ESP_LOGI(TAG, "Written %d bytes", written);
     // writes 512
-    // vTaskDelay(1);
+    vTaskDelay(1);
   }
 }
