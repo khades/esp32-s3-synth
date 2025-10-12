@@ -11,12 +11,26 @@
 #include "sine-ping.h"
 #include <stdio.h>
 
-#define PATH "aaaa"
+#define PATH "Plugin host"
+#include "midi-events.h"
 
 static const char *TAG = "PLUGIN_HOST";
 static const clap_plugin_t *pluginRegistry[PLUGINS_COUNT] = {};
 struct clap_host host = {.clap_version = CLAP_VERSION};
+
 // TODO params
+clap_input_events_t events = {
+    NULL,
+    event_list_size,
+    event_get,
+};
+
+struct event_list_container outBuffer = {0, NULL, NULL};
+
+clap_output_events_t outEvents = {
+    NULL,
+    try_push,
+};
 
 void plugins_init() {
   ESP_LOGI(TAG, "INIT");
@@ -79,29 +93,13 @@ void plugins_activate(double sample_rate
     // pluginRegistry[i]->get_extension()
   }
 }
+void plugins_process(struct event_list_container *event_list, float **output) {
+  events.ctx = event_list;
+  outBuffer.count = 0;
+  outBuffer.first = NULL;
+  outBuffer.last = NULL;
+  outEvents.ctx = &outBuffer;
 
-uint32_t returnZero(const struct clap_input_events *list) { return 0; };
-
-uint32_t returnOne(const struct clap_input_events *list) { return 1; };
-
-const clap_event_header_t *get(const struct clap_input_events *list,
-                               uint32_t index) {
-  return NULL;
-}
-const clap_event_header_t keypress = {
-
-};
-
-// TODO
-// proper midi struct, should be coming from args
-// honestly should be its own package
-const clap_input_events_t events = {
-    NULL,
-    returnZero,
-    get,
-};
-
-void plugins_process(clap_input_events_t *in_events, float **output) {
   float left[MONO_FRAMES_TO_RENDER];
   float right[MONO_FRAMES_TO_RENDER];
 
@@ -139,7 +137,7 @@ void plugins_process(clap_input_events_t *in_events, float **output) {
       .in_events = &events,
       // TODO
       // if i do some arp
-      .out_events = {},
+      .out_events = &outEvents,
   };
 
   for (int i = 0; i < PLUGINS_COUNT; i++) {
@@ -151,5 +149,14 @@ void plugins_process(clap_input_events_t *in_events, float **output) {
     // copying output to input so we proceed  processing
     memcpy(soundBuffer[0], output[0], MONO_FRAMES_TO_RENDER);
     memcpy(soundBuffer[1], output[1], MONO_FRAMES_TO_RENDER);
+    event_list_clear(event_list);
+
+    event_list->count = outBuffer.count;
+    event_list->first = outBuffer.first;
+    event_list->last = outBuffer.last;
+
+    outBuffer.count = 0;
+    outBuffer.first = NULL;
+    outBuffer.last = NULL;
   }
 }

@@ -1,4 +1,5 @@
 #include "clap/plugin.h"
+#include "midi-events.h"
 
 typedef struct {
   const clap_plugin_descriptor_t *descriptor;
@@ -7,4 +8,4 @@ typedef struct {
 
 void plugins_init();
 void plugins_activate(double sample_rate);
-void plugins_process(clap_input_events_t *in_events, float **output);
+void plugins_process(struct event_list_container *in_events, float **output);

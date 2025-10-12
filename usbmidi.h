@@ -26,8 +26,12 @@
 typedef enum {
   MIDI_CIN_NOTE_OFF = 0x08,
   MIDI_CIN_NOTE_ON = 0x09,
+  MIDI_CIN_NOTE_AFTERTOUCH = 0x0A,
   MIDI_CIN_CONTROL_CHANGE = 0x0B,
   MIDI_CIN_PROGRAM_CHANGE = 0x0C,
+  MIDI_CIN_CHANNEL_AFTERTOUCH = 0x0D,
+  MIDI_CIN_PITCH_BEND = 0x0E,
+
 } MidiCin;
 
 typedef void (*MidiMessageCallback)(const uint8_t message[4]);
