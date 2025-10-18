@@ -45,7 +45,7 @@ Somehow i managed to port https://github.com/enudenki/esp32-usb-host-midi-librar
 
 I've read C Primer Plus and i have idea what to C code does now.
 
-### Reading how to use DMA buffers for sound, whats buffers etc - ✖
+### Reading how to use DMA buffers for sound, whats buffers etc - ✔
 
 It seems that's the main idea how that would work, i'll sythesize some sound based on current midi state and time state, write some data ahead, then process midi after that in 1000HZ tick time. 
 
@@ -88,6 +88,9 @@ This is enough to get right sound from buffer filled with floats by clap into I2
 
 [cpp built in cast method](https://en.cppreference.com/w/cpp/numeric/saturate_cast.html)
 
+### Write funny article about how i stuggled with stupid thigs with I2S - ✖
+
+Writing intensifies.
 
 ### ~~Wiring MIDI to Sound - ✖~~
 
