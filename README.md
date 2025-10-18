@@ -43,7 +43,7 @@ Somehow i managed to port https://github.com/enudenki/esp32-usb-host-midi-librar
 
 ### Learning C - ✔
 
-I've read C Primer Plus and i have idea what to C code does now.
+I've read C Primer Plus and i have idea what to C code does now. I did read beej book also. I think i'll need some more books like ModernC but i'll stop for now.
 
 ### Reading how to use DMA buffers for sound, whats buffers etc - ✔
 
