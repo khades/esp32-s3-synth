@@ -122,13 +122,18 @@ I am using CLAP plugin that is built on pc. It works on hardware now.
 
 ### Fix sound craclking - ✖
 
-I2s, blocking etc etc
+I2s, blocking etc etc. I need to set timeout 1ms MORE than sound itself. WHY?
+
+also i implemented double buffering so i can use two cores.
 
 ### Learning how DSP works - ✖
 
 When i will do simple good synth, i will move to the more processing\modeling stuff i wanted.
 
 PS: I am already struggling with some parts of DSP. Saturation clamp was not fun to epxlore.
+
+### Read some C threads book and FreeRTOS one - ✖
+
 
 ### Serial MIDI - ✖
 
