@@ -27,15 +27,24 @@ float right[SAMPLES_PER_TICK];
 float *output[AUDIO_CHANNELS] = {left, right};
 
 // Double buffering
+// lame, should be ring buffer??
 uint32_t adaptedOutputFirst[SAMPLES_PER_TICK * 2];
 
 uint32_t adaptedOutputSecond[SAMPLES_PER_TICK * 2];
 
 size_t outputBufferSize = sizeof(adaptedOutputFirst);
 
-uint32_t *adaptedOutputs[] = {adaptedOutputFirst, adaptedOutputSecond};
+uint32_t *adaptedOutputs[2] = {adaptedOutputFirst, adaptedOutputSecond};
 
 bool useMain = false;
+
+struct soundContext {
+  bool *useMain;
+  // i hate it there
+  uint32_t **outputs;
+};
+
+const struct soundContext soundContextValue = {&useMain, adaptedOutputs};
 
 void onMidiMessage(const uint8_t data[4]) {
   uint8_t channel = data[1] & 0x0F;
@@ -117,20 +126,22 @@ void onMidiDeviceConnected() { ESP_LOGI(TAG, "onMidiDeviceConnected\n"); }
 void onMidiDeviceDisconnected() { ESP_LOGI(TAG, "onMidiDeviceDisconnected\n"); }
 size_t written = 0;
 
+// i need to cut out that functions out, especially when i have pvParameters
+// context
 void audioTask(void *pvParameters) {
+  // do we need to use ring buffer with callback?
   for (;;) {
-    uint32_t *bufferToUse = useMain ? adaptedOutputs[0] : adaptedOutputs[1];
+    const struct soundContext *soundCTX = pvParameters;
+
+    uint32_t *bufferToUse =
+        soundCTX->useMain ? soundCTX->outputs[0] : soundCTX->outputs[1];
 
     // it sure blocks data in way it feels there's no dma
     // and it crackles cause of
     ESP_ERROR_CHECK_WITHOUT_ABORT(i2s_channel_write(
         tx_handle, bufferToUse, outputBufferSize,
         // in ideal world timeout should be exactly buffer multiplier, aka 1
-        &written, BUFFER_MULTIPLIER + 1));
-    if (written != outputBufferSize) {
-      ESP_LOGE(TAG, "Expected to write %d, written %d", outputBufferSize,
-               written);
-    }
+        &written, BUFFER_MULTIPLIER));
   }
 
   vTaskDelete(NULL);
@@ -179,8 +190,9 @@ void app_main(void) {
   plugins_init();
   plugins_activate(SAMPLE_RATE);
 
-  xTaskCreatePinnedToCore(audioTask, "audio", 102400, NULL,
-                          configMAX_PRIORITIES - 1, NULL, 0);
+  xTaskCreatePinnedToCore(audioTask, "audio", 102400,
+                          (void *)&soundContextValue, configMAX_PRIORITIES - 1,
+                          NULL, 0);
 
   xTaskCreatePinnedToCore(midiTask, "midi + synth", 102400, NULL,
                           configMAX_PRIORITIES - 1, NULL, 1);

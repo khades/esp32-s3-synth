@@ -126,6 +126,8 @@ I2s, blocking etc etc. I need to set timeout 1ms MORE than sound itself. WHY?
 
 also i implemented double buffering so i can use two cores.
 
+Probably need ring buffer and generate sound in it and read data from callback, filling on fly?
+
 ### Learning how DSP works - ✖
 
 When i will do simple good synth, i will move to the more processing\modeling stuff i wanted.
@@ -133,6 +135,7 @@ When i will do simple good synth, i will move to the more processing\modeling st
 PS: I am already struggling with some parts of DSP. Saturation clamp was not fun to epxlore.
 
 ### Read some C threads book and FreeRTOS one - ✖
+
 
 
 ### Serial MIDI - ✖
