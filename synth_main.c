@@ -7,6 +7,12 @@
 #include "plugin-host.h"
 #include "sound.h"
 #include "usbmidi.h"
+#include "xtensa/config/specreg.h"
+
+#define SAFE_FLOAT_TO_INT32(x)                                                 \
+  ((x > 1.0f)    ? 2147483647                                                  \
+   : (x < -1.0f) ? -2147483648                                                 \
+                 : (int32_t)(x * 2147483647.0f))
 
 static const char *TAG = "MAIN";
 
@@ -15,11 +21,21 @@ i2s_chan_handle_t tx_handle;
 
 struct event_list_container midiEvents = {0, NULL, NULL};
 
-float left[MONO_FRAMES_TO_RENDER];
-float right[MONO_FRAMES_TO_RENDER];
+float left[SAMPLES_PER_TICK];
+float right[SAMPLES_PER_TICK];
 
 float *output[AUDIO_CHANNELS] = {left, right};
-float adaptedOutput[STEREOFRAMES_TO_RENDER];
+
+// Double buffering
+uint32_t adaptedOutputFirst[SAMPLES_PER_TICK * 2];
+
+uint32_t adaptedOutputSecond[SAMPLES_PER_TICK * 2];
+
+size_t outputBufferSize = sizeof(adaptedOutputFirst);
+
+uint32_t *adaptedOutputs[] = {adaptedOutputFirst, adaptedOutputSecond};
+
+bool useMain = false;
 
 void onMidiMessage(const uint8_t data[4]) {
   uint8_t channel = data[1] & 0x0F;
@@ -86,7 +102,6 @@ void onMidiMessage(const uint8_t data[4]) {
 
   case MIDI_CIN_PITCH_BEND: {
     // https://www.mixagesoftware.com/en/midikit/help/HTML/midi_events.html
-
     ESP_LOGI(TAG, "Pitchbend: params:%d %d ", data[2], data[3]);
     break;
   }
@@ -100,6 +115,49 @@ void onMidiMessage(const uint8_t data[4]) {
 void onMidiDeviceConnected() { ESP_LOGI(TAG, "onMidiDeviceConnected\n"); }
 
 void onMidiDeviceDisconnected() { ESP_LOGI(TAG, "onMidiDeviceDisconnected\n"); }
+size_t written = 0;
+
+void audioTask(void *pvParameters) {
+  for (;;) {
+    uint32_t *bufferToUse = useMain ? adaptedOutputs[0] : adaptedOutputs[1];
+
+    // it sure blocks data in way it feels there's no dma
+    // and it crackles cause of
+    ESP_ERROR_CHECK_WITHOUT_ABORT(i2s_channel_write(
+        tx_handle, bufferToUse, outputBufferSize,
+        // in ideal world timeout should be exactly buffer multiplier, aka 1
+        &written, BUFFER_MULTIPLIER + 1));
+    if (written != outputBufferSize) {
+      ESP_LOGE(TAG, "Expected to write %d, written %d", outputBufferSize,
+               written);
+    }
+  }
+
+  vTaskDelete(NULL);
+}
+
+void midiTask() {
+  for (;;) {
+
+    UsbMidi_update(&midi);
+
+    plugins_process(&midiEvents, output);
+
+    event_list_clear(&midiEvents);
+
+    uint32_t *bufferToUse = useMain ? adaptedOutputs[1] : adaptedOutputs[0];
+
+    for (int i = 0; i < SAMPLES_PER_TICK; i++) {
+      // -1 ... 1 to proper int values
+      bufferToUse[2 * i] = SAFE_FLOAT_TO_INT32(left[i]);
+      bufferToUse[2 * i + 1] = SAFE_FLOAT_TO_INT32(right[i]);
+    }
+
+    useMain = useMain ? false : true;
+  }
+
+  vTaskDelete(NULL);
+}
 
 void app_main(void) {
   // USBMidi section
@@ -121,25 +179,9 @@ void app_main(void) {
   plugins_init();
   plugins_activate(SAMPLE_RATE);
 
-  size_t written = 0;
-  while (1) {
-    UsbMidi_update(&midi);
+  xTaskCreatePinnedToCore(audioTask, "audio", 102400, NULL,
+                          configMAX_PRIORITIES - 1, NULL, 0);
 
-    plugins_process(&midiEvents, output);
-    // I have no idea, will skip it for now
-    // https://github.com/parabuzzle/esp-idf-simple-audio-player/tree/main
-    // https://esp32.com/viewtopic.php?t=8234
-    // https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/peripherals/i2s.html
-    for (int i = 0; i < MONO_FRAMES_TO_RENDER; i++) {
-      adaptedOutput[2 * i] = left[i + 1];
-      adaptedOutput[2 * i + 1] = right[i + 1];
-    }
-
-    i2s_channel_write(tx_handle, adaptedOutput, sizeof(adaptedOutput), &written,
-                      20);
-    // ESP_LOGI(TAG, "Written %d bytes", written);
-    // writes 512
-    vTaskDelay(1);
-    event_list_clear(&midiEvents);
-  }
+  xTaskCreatePinnedToCore(midiTask, "midi + synth", 102400, NULL,
+                          configMAX_PRIORITIES - 1, NULL, 1);
 }

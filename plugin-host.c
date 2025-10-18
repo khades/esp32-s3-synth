@@ -40,19 +40,8 @@ void plugins_init() {
     if (plugin == NULL) {
       ESP_LOGE(TAG, "No plugin. How?");
     }
-    ESP_LOGD(TAG, "Plugin pointer is at address: %p", plugin);
 
-    ESP_LOGD(TAG, "Plugin init function pointer is at address: %p",
-             plugin->init);
-    ESP_LOGD(TAG, "Plugin init function pointer is at address: %p",
-             plugin->get_factory);
-
-    if (plugin->init == NULL) {
-      ESP_LOGE(TAG, "No init plugin. How?");
-    }
-    // Fails here now
     plugin->init(PATH);
-    ESP_LOGI(TAG, "HAD INIT");
 
     clap_plugin_factory_t *factory =
         (clap_plugin_factory_t *)plugin->get_factory(CLAP_PLUGIN_FACTORY_ID);
@@ -60,18 +49,12 @@ void plugins_init() {
     if (factory == NULL) {
       ESP_LOGE(TAG, "Factory Fail");
     }
-    // LOADING ONLY FIRST PLUGIN
-    // if not - TODO
+
     const clap_plugin_descriptor_t *descriptor =
         factory->get_plugin_descriptor(factory, 0);
-    if (descriptor == NULL) {
-      ESP_LOGE(TAG, "Descriptor Fail");
-    }
+
     const clap_plugin_t *pluginInstance =
         factory->create_plugin(factory, &host, descriptor->id);
-    ESP_LOGD(TAG, "Plugin instance pointer is at address: %p", pluginInstance);
-    ESP_LOGD(TAG, "Plugin instance init function pointer is at address: %p",
-             pluginInstance->init);
 
     pluginRegistry[i] = pluginInstance;
 
@@ -100,12 +83,13 @@ void plugins_process(struct event_list_container *event_list, float **output) {
   outBuffer.last = NULL;
   outEvents.ctx = &outBuffer;
 
-  float left[MONO_FRAMES_TO_RENDER];
-  float right[MONO_FRAMES_TO_RENDER];
+  float left[SAMPLES_PER_TICK];
+  float right[SAMPLES_PER_TICK];
 
   float *soundBuffer[AUDIO_CHANNELS] = {left, right};
-  memcpy(soundBuffer[0], output[0], MONO_FRAMES_TO_RENDER);
-  memcpy(soundBuffer[1], output[1], MONO_FRAMES_TO_RENDER);
+
+  memcpy(soundBuffer[0], output[0], sizeof(left));
+  memcpy(soundBuffer[1], output[1], sizeof(right));
 
   const clap_audio_buffer_t inputBuffer[1] = {{.data32 = soundBuffer,
                                                .data64 = NULL,
@@ -119,16 +103,9 @@ void plugins_process(struct event_list_container *event_list, float **output) {
                                           .latency = 0,
                                           .constant_mask = 0}};
 
-  // ESP_LOGD(TAG, "Plugin host output pointer in clap is at address: %p",
-  //          outputBuffer[0].data32);
-  // ESP_LOGD(TAG, "Plugin host output buffer pointer is at address: %p",
-  //          outputBuffer[0]);
-  // ESP_LOGD(TAG, "Plugin host output buffer pointer is at address: %p",
-  //          outputBuffer);
-
   const clap_process_t process = {
       .steady_time = -1,
-      .frames_count = MONO_FRAMES_TO_RENDER,
+      .frames_count = SAMPLES_PER_TICK,
       .transport = NULL,
       .audio_inputs = inputBuffer,
       .audio_outputs = outputBuffer,
@@ -147,8 +124,8 @@ void plugins_process(struct event_list_container *event_list, float **output) {
     // Upper poiners are unobviously broken for me
     pluginRegistry[i]->process(pluginRegistry[i], &process);
     // copying output to input so we proceed  processing
-    memcpy(soundBuffer[0], output[0], MONO_FRAMES_TO_RENDER);
-    memcpy(soundBuffer[1], output[1], MONO_FRAMES_TO_RENDER);
+    memcpy(soundBuffer[0], output[0], sizeof(left));
+    memcpy(soundBuffer[1], output[1], sizeof(right));
     event_list_clear(event_list);
 
     event_list->count = outBuffer.count;

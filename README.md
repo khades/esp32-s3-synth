@@ -70,11 +70,23 @@ Its in audio.h
 
 With CLAP SDK - by frames
 
-##### Implement bridge of CLAP float* array of sound into I2S DMA Buffer - ✖
+##### Implement bridge of CLAP float* array of sound into I2S DMA Buffer - ✔
 
 Still no idea about Filling DMA buffer. Somehow PCM format looks the same between CLAP and I2S.
 
 [Good example](https://github.com/infrasonicaudio/esp32-i2s-synth-example/blob/main/main/i2s_example_main.c)
+
+As it turned out synth pcm output is float and i2s input is int32. So we need "float unpacking" or "saturation cast"
+
+I used ChatGPT to figure that out
+
+```
+bufferToUse[2 * i] = (int32_t)(left[i] * 2147483647.0f);
+```
+
+This is enough to get right sound from buffer filled with floats by clap into I2S.
+
+[cpp built in cast method](https://en.cppreference.com/w/cpp/numeric/saturate_cast.html)
 
 
 ### ~~Wiring MIDI to Sound - ✖~~
@@ -83,10 +95,9 @@ Still no idea about Filling DMA buffer. Somehow PCM format looks the same betwee
 
 I will use CLAP SDK, will wrap current USBMIDI events into clap events.
 
-### Write USBMIDI -> CLAP events code - ✖
+### Write USBMIDI -> CLAP events code - ✔
 
 Not that hard. Good example of writing linked list with memory free.
-
 
 ### ~~Writing document with idea about simple HAL or even struct\data pipeline for realtime synth  - ✖~~
 
@@ -102,9 +113,19 @@ I will use CLAP SDK.
 
 I took simple CLAP plugin written in C and i will integrate it into the board by implementing CLAP-like host. As outcome i will have CLAP plugin that i can build into the controller AND on PC so i will develop stuff on PC.
 
+### Run simple CLAP plugin without modifications - ✔
+
+I am using CLAP plugin that is built on pc. It works on hardware now.
+
+### Fix sound craclking - ✖
+
+I2s, blocking etc etc
+
 ### Learning how DSP works - ✖
 
 When i will do simple good synth, i will move to the more processing\modeling stuff i wanted.
+
+PS: I am already struggling with some parts of DSP. Saturation clamp was not fun to epxlore.
 
 ### Serial MIDI - ✖
 
