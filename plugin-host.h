@@ -8,4 +8,5 @@ typedef struct {
 
 void plugins_init();
 void plugins_activate(double sample_rate);
-void plugins_process(struct event_list_container *in_events, float **output);
+void plugins_process(struct event_list_container *in_events, float **output,
+                     int frames_to_generate);

@@ -1,13 +1,19 @@
+#include "audio-task.h"
 #include "audio.h"
+
+
 #include "clap/events.h"
 #include "driver/i2s_common.h"
 #include "driver/i2s_types.h"
 #include "esp_log.h"
+
+#include "freertos/idf_additions.h"
+
 #include "midi-events.h"
 #include "plugin-host.h"
 #include "sound.h"
-#include "usbmidi.h"
-#include "xtensa/config/specreg.h"
+#include "usb-midi.h"
+#include <stdint.h>
 
 #define SAFE_FLOAT_TO_INT32(x)                                                 \
   ((x > 1.0f)    ? 2147483647                                                  \
@@ -21,30 +27,24 @@ i2s_chan_handle_t tx_handle;
 
 struct event_list_container midiEvents = {0, NULL, NULL};
 
-float left[SAMPLES_PER_TICK];
-float right[SAMPLES_PER_TICK];
+float left[SAMPLES_PER_TICK * 2];
+float right[SAMPLES_PER_TICK * 2];
 
 float *output[AUDIO_CHANNELS] = {left, right};
 
-// Double buffering
-// lame, should be ring buffer??
-uint32_t adaptedOutputFirst[SAMPLES_PER_TICK * 2];
+StreamBufferHandle_t streamBuffer;
 
-uint32_t adaptedOutputSecond[SAMPLES_PER_TICK * 2];
+const struct soundI2SContext soundI2SContextValue = {&streamBuffer, &tx_handle};
 
-size_t outputBufferSize = sizeof(adaptedOutputFirst);
-
-uint32_t *adaptedOutputs[2] = {adaptedOutputFirst, adaptedOutputSecond};
-
-bool useMain = false;
-
-struct soundContext {
-  bool *useMain;
-  // i hate it there
-  uint32_t **outputs;
+struct soundRenderingContext {
+  float **output;
+  struct event_list_container *midi_events;
+  struct UsbMidi *midi;
+  StreamBufferHandle_t *streamBuffer;
 };
 
-const struct soundContext soundContextValue = {&useMain, adaptedOutputs};
+const struct soundRenderingContext soundRenderingContextValue = {
+    output, &midiEvents, &midi, &streamBuffer};
 
 void onMidiMessage(const uint8_t data[4]) {
   uint8_t channel = data[1] & 0x0F;
@@ -124,47 +124,57 @@ void onMidiMessage(const uint8_t data[4]) {
 void onMidiDeviceConnected() { ESP_LOGI(TAG, "onMidiDeviceConnected\n"); }
 
 void onMidiDeviceDisconnected() { ESP_LOGI(TAG, "onMidiDeviceDisconnected\n"); }
-size_t written = 0;
 
-// i need to cut out that functions out, especially when i have pvParameters
-// context
-void audioTask(void *pvParameters) {
-  // do we need to use ring buffer with callback?
+void midiTask(void *pvParameters) {
   for (;;) {
-    const struct soundContext *soundCTX = pvParameters;
+    const struct soundRenderingContext *soundCTX = pvParameters;
+    if (soundCTX->streamBuffer == NULL) {
+      ESP_LOGE(TAG, "Buffer creation error");
+      continue;
+    }
+    UsbMidi_update(soundCTX->midi);
 
-    uint32_t *bufferToUse =
-        soundCTX->useMain ? soundCTX->outputs[0] : soundCTX->outputs[1];
+    size_t free_size = xStreamBufferSpacesAvailable(*soundCTX->streamBuffer);
 
-    // it sure blocks data in way it feels there's no dma
-    // and it crackles cause of
-    ESP_ERROR_CHECK_WITHOUT_ABORT(i2s_channel_write(
-        tx_handle, bufferToUse, outputBufferSize,
-        // in ideal world timeout should be exactly buffer multiplier, aka 1
-        &written, BUFFER_MULTIPLIER));
-  }
+    if (free_size == 0) {
+      continue;
+    }
+    if (xStreamBufferBytesAvailable(*soundCTX->streamBuffer) == 0) {
+      ESP_LOGE(TAG, "Rendering buffer starved");
+    }
 
-  vTaskDelete(NULL);
-}
+    int frames_to_render = free_size / AUDIO_CHANNELS / sizeof(int32_t);
 
-void midiTask() {
-  for (;;) {
+    uint32_t bufferToUse[frames_to_render * 2];
 
-    UsbMidi_update(&midi);
+    ESP_LOGD(TAG, "Writing %d bytes", sizeof(bufferToUse));
+    ESP_LOGD(TAG, "Rendering");
 
-    plugins_process(&midiEvents, output);
+    // Renders silence for now
+    plugins_process(&midiEvents, output, frames_to_render);
+    ESP_LOGD(TAG, "Clearing list");
 
-    event_list_clear(&midiEvents);
+    event_list_clear(soundCTX->midi_events);
+    ESP_LOGD(TAG, "Converting");
 
-    uint32_t *bufferToUse = useMain ? adaptedOutputs[1] : adaptedOutputs[0];
-
-    for (int i = 0; i < SAMPLES_PER_TICK; i++) {
+    for (int i = 0; i < frames_to_render; i++) {
       // -1 ... 1 to proper int values
       bufferToUse[2 * i] = SAFE_FLOAT_TO_INT32(left[i]);
       bufferToUse[2 * i + 1] = SAFE_FLOAT_TO_INT32(right[i]);
     }
 
-    useMain = useMain ? false : true;
+    ESP_LOGD(TAG, "Sending in one write");
+
+    // Doing it in one write
+    size_t bytesWrote = xStreamBufferSend(
+        *soundCTX->streamBuffer, (void *)bufferToUse, sizeof(bufferToUse), 0);
+
+    if (bytesWrote != sizeof(bufferToUse)) {
+      ESP_LOGW(TAG, "Wrote %d bytes instead %d", bytesWrote,
+               sizeof(bufferToUse));
+    }
+
+    ESP_LOGD(TAG, "Sending done!");
   }
 
   vTaskDelete(NULL);
@@ -173,6 +183,13 @@ void midiTask() {
 void app_main(void) {
   // USBMidi section
   UsbMidiInit(&midi);
+
+  // Double the size cause stereo
+  // and extra double the size cause bigger buffer for backpressure
+  // rendering extra buffer to be sure we have one buffer full of data
+  // and rendering missing part afterwards
+  streamBuffer = xStreamBufferCreate(SAMPLES_PER_TICK * 2 * 2 * sizeof(int32_t),
+                                     2 * sizeof(int32_t));
 
   UsbMidi_onMidiMessage(&midi, onMidiMessage);
   UsbMidi_onDeviceConnected(&midi, onMidiDeviceConnected);
@@ -186,14 +203,18 @@ void app_main(void) {
   ESP_ERROR_CHECK(i2s_channel_enable(tx_handle));
 
   // pluginHostInit
+  if (streamBuffer == NULL) {
+    ESP_LOGE(TAG, "Buffer creation error");
+  }
 
   plugins_init();
   plugins_activate(SAMPLE_RATE);
 
   xTaskCreatePinnedToCore(audioTask, "audio", 102400,
-                          (void *)&soundContextValue, configMAX_PRIORITIES - 1,
-                          NULL, 0);
+                          (void *)&soundI2SContextValue,
+                          configMAX_PRIORITIES - 1, NULL, 0);
 
-  xTaskCreatePinnedToCore(midiTask, "midi + synth", 102400, NULL,
+  xTaskCreatePinnedToCore(midiTask, "midi + synth", 102400,
+                          (void *)&soundRenderingContextValue,
                           configMAX_PRIORITIES - 1, NULL, 1);
 }

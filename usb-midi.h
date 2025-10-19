@@ -9,7 +9,6 @@
 #include <stdatomic.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <usb/usb_host.h>
 
 #ifndef __USB_HOST_MIDI

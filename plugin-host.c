@@ -76,15 +76,15 @@ void plugins_activate(double sample_rate
     // pluginRegistry[i]->get_extension()
   }
 }
-void plugins_process(struct event_list_container *event_list, float **output) {
+void plugins_process(struct event_list_container *event_list, float **output, int frames_to_generate) {
   events.ctx = event_list;
   outBuffer.count = 0;
   outBuffer.first = NULL;
   outBuffer.last = NULL;
   outEvents.ctx = &outBuffer;
 
-  float left[SAMPLES_PER_TICK];
-  float right[SAMPLES_PER_TICK];
+  float left[frames_to_generate];
+  float right[frames_to_generate];
 
   float *soundBuffer[AUDIO_CHANNELS] = {left, right};
 
@@ -105,7 +105,7 @@ void plugins_process(struct event_list_container *event_list, float **output) {
 
   const clap_process_t process = {
       .steady_time = -1,
-      .frames_count = SAMPLES_PER_TICK,
+      .frames_count = frames_to_generate,
       .transport = NULL,
       .audio_inputs = inputBuffer,
       .audio_outputs = outputBuffer,

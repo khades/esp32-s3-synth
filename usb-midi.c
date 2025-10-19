@@ -5,12 +5,12 @@
  * That's naive port to C from a person that doesnt know either C or C++
  */
 
-#include "usbmidi.h"
+#include "usb-midi.h"
 
 #include "esp_log.h"
 #include <string.h>
 
-static const char *TAG = "UST_MIDI_DRIVER";
+static const char *TAG = "USB_MIDI_DRIVER";
 
 static void _clientEventCallback(const usb_host_client_event_msg_t *eventMsg,
                                  void *arg);

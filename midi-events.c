@@ -55,8 +55,8 @@ const clap_event_header_t *event_get(const struct clap_input_events *list,
   uint32_t curr = 0;
   while (pointer != NULL) {
     if (curr == index) {
-      ESP_LOGI("Events", "We got curr %d", curr);
-      ESP_LOGI("Event", "Pointer is %p", pointer->event);
+      ESP_LOGD("Events", "We got curr %d", curr);
+      ESP_LOGD("Event", "Pointer is %p", pointer->event);
       return pointer->event;
     }
     pointer = pointer->next;
@@ -68,7 +68,7 @@ const clap_event_header_t *event_get(const struct clap_input_events *list,
 bool try_push(const struct clap_output_events *list,
               const clap_event_header_t *event) {
   struct event_list_container *container = list->ctx;
-  ESP_LOGI("Event", "Output pointer is %p", list->ctx);
+  ESP_LOGD("Event", "Output pointer is %p", list->ctx);
 
   event_add(container, (void *)event);
 
