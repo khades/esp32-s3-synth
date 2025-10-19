@@ -120,17 +120,19 @@ I took simple CLAP plugin written in C and i will integrate it into the board by
 
 I am using CLAP plugin that is built on pc. It works on hardware now.
 
-### Fix sound craclking - ✖
+### Fix sound craclking - ✖/✔
 
 I2s, blocking etc etc. I need to set timeout 1ms MORE than sound itself. WHY?
 
-also i implemented double buffering so i can use two cores.
+~~also i implemented double buffering so i can use two cores.~~
 
 ~~Probably need ring buffer and generate sound in it and read data from callback, filling on fly?~~
 
-I used xStreamBuffer and it works like needed, buffer is twice size of buffer, synth tries to fill 1.5 times of buffer every tick OR remaining space. I2S tries to flush 1 buffer. Still Cracking but far less.
+~~I used xStreamBuffer and it works like needed, buffer is twice size of buffer, synth tries to fill 1.5 times of buffer every tick OR remaining space. I2S tries to flush 1 buffer. Still Cracking but far less.~~
 
-I wanna do last step and use callbacks.
+~~I wanna do last step and use callbacks.~~
+
+Giving up for now.
 
 ### Learning how DSP works - ✖
 
