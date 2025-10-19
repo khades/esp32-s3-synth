@@ -1,7 +1,6 @@
 #include "audio-task.h"
 #include "audio.h"
 
-
 #include "clap/events.h"
 #include "driver/i2s_common.h"
 #include "driver/i2s_types.h"
@@ -188,6 +187,7 @@ void app_main(void) {
   // and extra double the size cause bigger buffer for backpressure
   // rendering extra buffer to be sure we have one buffer full of data
   // and rendering missing part afterwards
+  // FAILS IF ONE OF 2 IS 4
   streamBuffer = xStreamBufferCreate(SAMPLES_PER_TICK * 2 * 2 * sizeof(int32_t),
                                      2 * sizeof(int32_t));
 
