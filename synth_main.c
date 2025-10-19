@@ -1,4 +1,6 @@
+#include "audio-task-callback.h"
 #include "audio-task.h"
+
 #include "audio.h"
 
 #include "clap/events.h"
@@ -199,6 +201,10 @@ void app_main(void) {
 
   // I2S audio section
   i2s_new_channel(&chan_cfg, &tx_handle, NULL);
+  // i2s_event_callbacks_t callbacks = {.on_sent = &audioTaskCallback};
+
+  // i2s_channel_register_event_callback(tx_handle, &callbacks,
+  //                                     (void *)&soundI2SContextValue);
 
   i2s_channel_init_std_mode(tx_handle, &std_cfg);
   ESP_ERROR_CHECK(i2s_channel_enable(tx_handle));
