@@ -22,11 +22,11 @@ void audioTask(void *pvParameters) {
     int frames_to_read = processableSize / AUDIO_CHANNELS / sizeof(int32_t);
 
     // reading samples for stereo on two
-    if (frames_to_read > SAMPLES_PER_TICK * 2) {
-      frames_to_read = SAMPLES_PER_TICK * 2;
+    if (frames_to_read > SAMPLES_PER_TICK) {
+      frames_to_read = SAMPLES_PER_TICK;
     }
 
-    uint32_t *bufferToUse[frames_to_read];
+    uint32_t *bufferToUse[frames_to_read * 2];
     if (sizeof(bufferToUse) == 0) {
       ESP_LOGW(TAG, "Reading buffer starved");
 

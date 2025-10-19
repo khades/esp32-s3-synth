@@ -188,8 +188,10 @@ void app_main(void) {
   // rendering extra buffer to be sure we have one buffer full of data
   // and rendering missing part afterwards
   // FAILS IF ONE OF 2 IS 4
-  streamBuffer = xStreamBufferCreate(SAMPLES_PER_TICK * 2 * 2 * sizeof(int32_t),
-                                     2 * sizeof(int32_t));
+  // shouldnt be 2 at all
+  streamBuffer = xStreamBufferCreate(SAMPLES_PER_TICK * 2 * AUDIO_CHANNELS *
+                                         sizeof(int32_t),
+                                     AUDIO_CHANNELS * sizeof(int32_t));
 
   UsbMidi_onMidiMessage(&midi, onMidiMessage);
   UsbMidi_onDeviceConnected(&midi, onMidiDeviceConnected);
