@@ -138,9 +138,6 @@ void midiTask(void *pvParameters) {
     if (free_size == 0) {
       continue;
     }
-    if (xStreamBufferBytesAvailable(*soundCTX->streamBuffer) == 0) {
-      ESP_LOGE(TAG, "Rendering buffer starved");
-    }
 
     int frames_to_render = free_size / AUDIO_CHANNELS / sizeof(int32_t);
 
@@ -172,6 +169,7 @@ void midiTask(void *pvParameters) {
       ESP_LOGW(TAG, "Wrote %d bytes instead %d", bytesWrote,
                sizeof(bufferToUse));
     }
+
     vTaskDelay(1);
 
     ESP_LOGD(TAG, "Sending done!");
@@ -215,7 +213,7 @@ void app_main(void) {
 
   xTaskCreatePinnedToCore(audioTask, "audio", 102400,
                           (void *)&soundI2SContextValue,
-                          configMAX_PRIORITIES - 4, NULL, 0);
+                          configMAX_PRIORITIES - 1, NULL, 0);
 
   xTaskCreatePinnedToCore(midiTask, "midi + synth", 102400,
                           (void *)&soundRenderingContextValue,

@@ -16,42 +16,29 @@ void audioTask(void *pvParameters) {
       continue;
     }
 
-    size_t processableSize =
-        xStreamBufferBytesAvailable(*soundCTX->streamBuffer);
-    // floor rounding
-    int frames_to_read = processableSize / AUDIO_CHANNELS / sizeof(int32_t);
+    uint32_t *bufferToUse[SAMPLES_PER_TICK * 2];
 
-    // reading samples for stereo on two
-    if (frames_to_read > SAMPLES_PER_TICK) {
-      frames_to_read = SAMPLES_PER_TICK;
-    }
-
-    uint32_t *bufferToUse[frames_to_read * 2];
-    if (sizeof(bufferToUse) == 0) {
-      ESP_LOGW(TAG, "Reading buffer starved");
-
-      vTaskDelay(1);
-      continue;
-    }
     ESP_LOGD(TAG, "Reading %d bytes", sizeof(bufferToUse));
 
     const size_t sizeOfRead = xStreamBufferReceive(
-        *soundCTX->streamBuffer, bufferToUse, sizeof(bufferToUse), 0);
+        *soundCTX->streamBuffer, bufferToUse, sizeof(bufferToUse), 1);
 
     if (sizeOfRead != sizeof(bufferToUse)) {
       ESP_LOGW(TAG, "Expected %d, got %d bytes instead", sizeof(bufferToUse),
                sizeOfRead);
     }
 
-    ESP_ERROR_CHECK_WITHOUT_ABORT(i2s_channel_write(
-        *soundCTX->tx_handle, bufferToUse, sizeOfRead,
-        // in ideal world timeout should be exactly buffer multiplier, aka 1
-        &written, portMAX_DELAY));
+    if (sizeOfRead > 0) {
+      ESP_ERROR_CHECK_WITHOUT_ABORT(i2s_channel_write(
+          *soundCTX->tx_handle, bufferToUse, sizeOfRead,
+          // in ideal world timeout should be exactly buffer multiplier, aka 1
+          &written, portMAX_DELAY));
+    }
 
     if (sizeOfRead != written) {
-      ESP_LOGW(TAG, "Expected %d, wrote %d bytes instead", sizeof(bufferToUse),
-               sizeOfRead);
+      ESP_LOGW(TAG, "Expected %d, wrote %d bytes instead", sizeOfRead, written);
     }
+
     vTaskDelay(1);
   }
 
