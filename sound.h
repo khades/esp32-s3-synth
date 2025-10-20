@@ -47,7 +47,3 @@ static const i2s_std_config_t std_cfg = {
         },
 };
 
-// dma_buffer_size = dma_frame_num * slot_num * slot_bit_width / 8
-
-// TODO: i need overall defines that would calculate dma_buffer_size for given
-// sample rate,  tick rate, bit depth etc etc

@@ -1,7 +1,7 @@
-#include "audio-task-callback.h"
 #include "audio-task.h"
-
 #include "audio.h"
+#include "synth-task.h"
+#include "usb-midi-task.h"
 
 #include "clap/events.h"
 #include "driver/i2s_common.h"
@@ -12,14 +12,10 @@
 
 #include "midi-events.h"
 #include "plugin-host.h"
+#include "portmacro.h"
 #include "sound.h"
 #include "usb-midi.h"
 #include <stdint.h>
-
-#define SAFE_FLOAT_TO_INT32(x)                                                 \
-  ((x > 1.0f)    ? 2147483647                                                  \
-   : (x < -1.0f) ? -2147483648                                                 \
-                 : (int32_t)(x * 2147483647.0f))
 
 static const char *TAG = "MAIN";
 
@@ -28,24 +24,14 @@ i2s_chan_handle_t tx_handle;
 
 struct event_list_container midiEvents = {0, NULL, NULL};
 
-float left[SAMPLES_PER_TICK * 2];
-float right[SAMPLES_PER_TICK * 2];
+StreamBufferHandle_t audioStreamBuffer;
+StreamBufferHandle_t midiStreamBuffer;
 
-float *output[AUDIO_CHANNELS] = {left, right};
+const struct audioTaskContextStruct audioTaskContext = {&audioStreamBuffer,
+                                                        &tx_handle};
 
-StreamBufferHandle_t streamBuffer;
-
-const struct soundI2SContext soundI2SContextValue = {&streamBuffer, &tx_handle};
-
-struct soundRenderingContext {
-  float **output;
-  struct event_list_container *midi_events;
-  struct UsbMidi *midi;
-  StreamBufferHandle_t *streamBuffer;
-};
-
-const struct soundRenderingContext soundRenderingContextValue = {
-    output, &midiEvents, &midi, &streamBuffer};
+const struct synthTaskContextStruct synthTaskContext = {&audioStreamBuffer,
+                                                        &midiEvents};
 
 void onMidiMessage(const uint8_t data[4]) {
   uint8_t channel = data[1] & 0x0F;
@@ -126,60 +112,6 @@ void onMidiDeviceConnected() { ESP_LOGI(TAG, "onMidiDeviceConnected\n"); }
 
 void onMidiDeviceDisconnected() { ESP_LOGI(TAG, "onMidiDeviceDisconnected\n"); }
 
-void midiTask(void *pvParameters) {
-  for (;;) {
-    const struct soundRenderingContext *soundCTX = pvParameters;
-    if (soundCTX->streamBuffer == NULL) {
-      ESP_LOGE(TAG, "Buffer creation error");
-      continue;
-    }
-    UsbMidi_update(soundCTX->midi);
-
-    size_t free_size = xStreamBufferSpacesAvailable(*soundCTX->streamBuffer);
-
-    if (free_size == 0) {
-      continue;
-    }
-
-    int frames_to_render = free_size / AUDIO_CHANNELS / sizeof(int32_t);
-
-    uint32_t bufferToUse[frames_to_render * 2];
-
-    ESP_LOGD(TAG, "Writing %d bytes", sizeof(bufferToUse));
-    ESP_LOGD(TAG, "Rendering");
-
-    // Renders silence for now
-    plugins_process(&midiEvents, output, frames_to_render);
-    ESP_LOGD(TAG, "Clearing list");
-
-    event_list_clear(soundCTX->midi_events);
-    ESP_LOGD(TAG, "Converting");
-
-    for (int i = 0; i < frames_to_render; i++) {
-      // -1 ... 1 to proper int values
-      bufferToUse[2 * i] = SAFE_FLOAT_TO_INT32(left[i]);
-      bufferToUse[2 * i + 1] = SAFE_FLOAT_TO_INT32(right[i]);
-    }
-
-    ESP_LOGD(TAG, "Sending in one write");
-
-    // Doing it in one write
-    size_t bytesWrote = xStreamBufferSend(
-        *soundCTX->streamBuffer, (void *)bufferToUse, sizeof(bufferToUse), 0);
-
-    if (bytesWrote != sizeof(bufferToUse)) {
-      ESP_LOGW(TAG, "Wrote %d bytes instead %d", bytesWrote,
-               sizeof(bufferToUse));
-    }
-
-    vTaskDelay(1);
-
-    ESP_LOGD(TAG, "Sending done!");
-  }
-
-  vTaskDelete(NULL);
-}
-
 void app_main(void) {
   // USBMidi section
   UsbMidiInit(&midi);
@@ -188,11 +120,11 @@ void app_main(void) {
   // and extra double the size cause bigger buffer for backpressure
   // rendering extra buffer to be sure we have one buffer full of data
   // and rendering missing part afterwards
-  // FAILS IF ONE OF 2 IS 4
-  // shouldnt be 2 at all
-  streamBuffer = xStreamBufferCreate(SAMPLES_PER_TICK * 2 * AUDIO_CHANNELS *
-                                         sizeof(int32_t),
-                                     AUDIO_CHANNELS * sizeof(int32_t));
+
+  audioStreamBuffer =
+      xStreamBufferCreate(FRAME_NUMBERS * BUFFER_MULTIPLIER_LOCAL *
+                              AUDIO_CHANNELS * sizeof(int32_t),
+                          FRAME_NUMBERS * AUDIO_CHANNELS * sizeof(int32_t));
 
   UsbMidi_onMidiMessage(&midi, onMidiMessage);
   UsbMidi_onDeviceConnected(&midi, onMidiDeviceConnected);
@@ -201,27 +133,24 @@ void app_main(void) {
 
   // I2S audio section
   i2s_new_channel(&chan_cfg, &tx_handle, NULL);
-  // i2s_event_callbacks_t callbacks = {.on_sent = &audioTaskCallback};
-
-  // i2s_channel_register_event_callback(tx_handle, &callbacks,
-  //                                     (void *)&soundI2SContextValue);
 
   i2s_channel_init_std_mode(tx_handle, &std_cfg);
   ESP_ERROR_CHECK(i2s_channel_enable(tx_handle));
 
   // pluginHostInit
-  if (streamBuffer == NULL) {
+  if (audioStreamBuffer == NULL) {
     ESP_LOGE(TAG, "Buffer creation error");
   }
 
   plugins_init();
   plugins_activate(SAMPLE_RATE);
 
-  xTaskCreatePinnedToCore(audioTask, "audio", 102400,
-                          (void *)&soundI2SContextValue,
-                          configMAX_PRIORITIES - 1, NULL, 0);
+  xTaskCreate(audioTask, "audio", 102400, (void *)&audioTaskContext,
+              configMAX_PRIORITIES - 1, NULL);
 
-  xTaskCreatePinnedToCore(midiTask, "midi + synth", 102400,
-                          (void *)&soundRenderingContextValue,
-                          configMAX_PRIORITIES - 1, NULL, 1);
+  xTaskCreate(synthTask, "synth", 102400, (void *)&synthTaskContext,
+              configMAX_PRIORITIES - 1, NULL);
+
+  xTaskCreate(usbMidiTask, "usbmidi", 102400, (void *)&midi,
+              configMAX_PRIORITIES - 4, NULL);
 }

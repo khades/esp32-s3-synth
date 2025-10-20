@@ -4,10 +4,8 @@
 #include "hal/i2s_types.h"
 #define SAMPLE_RATE 48000
 
-// In ideal world that should be 1-4 with no cracking
-#define BUFFER_MULTIPLIER 4
 // we need this amount of samples per cycle
-#define SAMPLES_PER_TICK (SAMPLE_RATE * BUFFER_MULTIPLIER / configTICK_RATE_HZ)
+#define SAMPLES_PER_TICK (SAMPLE_RATE * 8 / configTICK_RATE_HZ)
 
 #define AUDIO_BITS I2S_DATA_BIT_WIDTH_32BIT
 #define AUDIO_CHANNELS I2S_SLOT_MODE_STEREO
@@ -20,4 +18,5 @@
 
 #define DMA_BUFFER_SIZE (AUDIO_BITS / 8 * BUFFERS * FRAME_NUMBERS)
 
+#define BUFFER_MULTIPLIER_LOCAL 2
 #endif

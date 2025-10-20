@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+// weeell i'd rather have streamBuffer, but that list can contain different size of values
 void event_list_clear(struct event_list_container *container) {
   struct event_element *pointer = container->first;
   while (pointer != NULL) {

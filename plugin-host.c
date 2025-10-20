@@ -76,8 +76,15 @@ void plugins_activate(double sample_rate
     // pluginRegistry[i]->get_extension()
   }
 }
-void plugins_process(struct event_list_container *event_list, float **output, int frames_to_generate) {
-  events.ctx = event_list;
+void plugins_process(struct event_list_container *event_list, float **output,
+                     int frames_to_generate) {
+  struct event_list_container local_event_list = *event_list;
+
+  event_list->count = 0;
+  event_list->first = NULL;
+  event_list->last = NULL;
+
+  events.ctx = &local_event_list;
   outBuffer.count = 0;
   outBuffer.first = NULL;
   outBuffer.last = NULL;
@@ -126,7 +133,7 @@ void plugins_process(struct event_list_container *event_list, float **output, in
     // copying output to input so we proceed  processing
     memcpy(soundBuffer[0], output[0], sizeof(left));
     memcpy(soundBuffer[1], output[1], sizeof(right));
-    event_list_clear(event_list);
+    event_list_clear(&local_event_list);
 
     event_list->count = outBuffer.count;
     event_list->first = outBuffer.first;
