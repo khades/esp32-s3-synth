@@ -1,4 +1,19 @@
-# ESP32-S3 synth using ESP-IDF
+~~# ESP32-S3 synth using ESP-IDF~~
+
+# Project failed
+
+I was trying to make CLAP-compatible host on ESP32-S3. After implemening host i stumbled on really bad stuttering issues with simple CLAP synth.
+
+As complete newbie to MCU i didnt knew that i need proper FPU with double precision for that. And it is widely used in the synth headers.
+
+ESP32-S3 suppors only single-precision math, excluding division, that makes that hardware not suitable for being CLAP-host.
+
+That is the reason why Teensy was widely used for project like that. I'll move to STM32H7 hardware with that code.
+
+Sadly there's no CLAP-like api for fixed point synths, that would be great.
+
+-----
+
 
 I was trying to make synth with Arduino with ESP32-S3 and after messing with it for some time i came to conclusion.
 
