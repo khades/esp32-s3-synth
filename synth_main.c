@@ -122,7 +122,7 @@ void app_main(void) {
   // and rendering missing part afterwards
 
   audioStreamBuffer =
-      xStreamBufferCreate(FRAME_NUMBERS * BUFFER_MULTIPLIER_LOCAL *
+      xStreamBufferCreate(FRAME_NUMBERS *
                               AUDIO_CHANNELS * sizeof(int32_t),
                           FRAME_NUMBERS * AUDIO_CHANNELS * sizeof(int32_t));
 

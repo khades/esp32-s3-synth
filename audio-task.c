@@ -27,9 +27,8 @@ void audioTask(void *pvParameters) {
 
     ESP_LOGD(TAG, "Reading %d bytes", sizeof(bufferToUse));
 
-    const size_t sizeOfRead =
-        xStreamBufferReceive(*taskContext->audioStreamBuffer, bufferToUse,
-                             sizeof(bufferToUse), portMAX_DELAY);
+    const size_t sizeOfRead = xStreamBufferReceive(
+        *taskContext->audioStreamBuffer, bufferToUse, sizeof(bufferToUse), 2);
 
     if (sizeOfRead != sizeof(bufferToUse)) {
       ESP_LOGW(TAG, "Expected to get %d, got %d bytes instead",
@@ -40,7 +39,7 @@ void audioTask(void *pvParameters) {
       ESP_ERROR_CHECK_WITHOUT_ABORT(i2s_channel_write(
           *taskContext->tx_handle, bufferToUse, sizeOfRead,
           // in ideal world timeout should be exactly buffer multiplier, aka 1
-          &written, portMAX_DELAY));
+          &written, 2));
     }
 
     if (sizeOfRead != written) {
@@ -57,9 +56,9 @@ void audioTask(void *pvParameters) {
     counter = counter + 1;
 
     ticks = ticks + (tickEnd - tickStart);
-    taskYIELD();
+    // taskYIELD();
 
-    // vTaskDelay(1);
+    vTaskDelay(1);
   }
 
   vTaskDelete(NULL);

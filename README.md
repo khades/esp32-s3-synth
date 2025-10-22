@@ -147,7 +147,7 @@ I2s, blocking etc etc. I need to set timeout 1ms MORE than sound itself. WHY?
 
 ~~I wanna do last step and use callbacks.~~
 
-Giving up for now.
+Giving up. Double\float problems, when i cut off double code in synth voice start in sine-ping it works with ZERO buffer.
 
 ### Learning how DSP works - ✖
 
