@@ -1,4 +1,4 @@
-~~# ESP32-S3 synth using ESP-IDF~~
+# ~~ESP32-S3 synth using ESP-IDF~~
 
 # Project failed
 
