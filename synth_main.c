@@ -49,7 +49,7 @@ void onMidiMessage(const uint8_t data[4]) {
         velocity == 0 ? CLAP_EVENT_NOTE_OFF : CLAP_EVENT_NOTE_ON;
     event.header.flags = 0;
     event.key = pitch;
-    event.note_id = -1;
+    event.note_id = pitch;
     event.channel = channel;
     event.port_index = 0;
     event.velocity = velocity;
@@ -70,7 +70,7 @@ void onMidiMessage(const uint8_t data[4]) {
     event.header.type = CLAP_EVENT_NOTE_OFF;
     event.header.flags = 0;
     event.key = pitch;
-    event.note_id = -1;
+    event.note_id = pitch;
     event.channel = channel;
     event.port_index = 0;
     event_add(&midiEvents, &event);
@@ -122,8 +122,7 @@ void app_main(void) {
   // and rendering missing part afterwards
 
   audioStreamBuffer =
-      xStreamBufferCreate(FRAME_NUMBERS *
-                              AUDIO_CHANNELS * sizeof(int32_t),
+      xStreamBufferCreate(FRAME_NUMBERS * AUDIO_CHANNELS * sizeof(int32_t),
                           FRAME_NUMBERS * AUDIO_CHANNELS * sizeof(int32_t));
 
   UsbMidi_onMidiMessage(&midi, onMidiMessage);

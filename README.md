@@ -1,6 +1,6 @@
-# ~~ESP32-S3 synth using ESP-IDF~~
+# ESP32-S3 synth using ESP-IDF
 
-# Project failed
+## Project almost failed
 
 I was trying to make CLAP-compatible host on ESP32-S3. After implemening host i stumbled on really bad stuttering issues with simple CLAP synth.
 
@@ -14,6 +14,9 @@ Sadly there's no CLAP-like api for fixed point synths, that would be great.
 
 -----
 
+For now i will use float-only calculations in plugin host as it seems to be enough, and use memoized reciprocals so i will use multiplication instead of division
+
+-----
 
 I was trying to make synth with Arduino with ESP32-S3 and after messing with it for some time i came to conclusion.
 
@@ -135,7 +138,7 @@ I took simple CLAP plugin written in C and i will integrate it into the board by
 
 I am using CLAP plugin that is built on pc. It works on hardware now.
 
-### Fix sound craclking - ✖/✔
+### Fix sound craclking - ✔
 
 I2s, blocking etc etc. I need to set timeout 1ms MORE than sound itself. WHY?
 
@@ -147,7 +150,7 @@ I2s, blocking etc etc. I need to set timeout 1ms MORE than sound itself. WHY?
 
 ~~I wanna do last step and use callbacks.~~
 
-Giving up. Double\float problems, when i cut off double code in synth voice start in sine-ping it works with ZERO buffer.
+Double\float problems, when i cut off double code in synth voice start in sine-ping it works with ZERO buffer. Code is as straightforward as it gets, fill xStreamBuffer with enough data and then read it in I2S Feeder code.
 
 ### Learning how DSP works - ✖
 
@@ -159,14 +162,16 @@ PS: I am already struggling with some parts of DSP. Saturation clamp was not fun
 
 
 
-### Serial MIDI - ✖
+### ~~Serial MIDI - ✖~~
 
-This is not hard step to make, but i will push it way after synth itself.
+~~This is not hard step to make, but i will push it way after synth itself.~~
+
+USBHost midi just works. Wont bother for forseable future for that device.
 
 ### Screen and MIDI learn - ✖
 
 After i do at least one good synth engine, i'll start doing MIDI learn setup using some simple button interface and screen.
 
-### Control Surface  - ✖
+### ~~Control Surface  - ✖~~
 
-I have Novation Launchkey mk3 and i will like to use its screen instead of I2c screen i'd have on. Also Launchkey is prety slick when coming to emulating switches with pads.
+~~I have Novation Launchkey mk3 and i will like to use its screen instead of I2c screen i'd have on. Also Launchkey is prety slick when coming to emulating switches with pads.~~
