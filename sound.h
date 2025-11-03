@@ -8,7 +8,7 @@
 
 #define I2S_BCLK 13
 #define I2S_DOUT 12
-#define I2S_MCLK 10 /* Master clock */
+#define I2S_MCLK 14 /* Master clock */
 
 static const i2s_chan_config_t chan_cfg = {
     .id = I2S_NUM_AUTO,
