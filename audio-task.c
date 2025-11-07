@@ -27,8 +27,9 @@ void audioTask(void *pvParameters) {
 
     ESP_LOGD(TAG, "Reading %d bytes", sizeof(bufferToUse));
 
-    const size_t sizeOfRead = xStreamBufferReceive(
-        *taskContext->audioStreamBuffer, bufferToUse, sizeof(bufferToUse), 2);
+    const size_t sizeOfRead =
+        xStreamBufferReceive(*taskContext->audioStreamBuffer, bufferToUse,
+                             sizeof(bufferToUse), BUFFER_MULTIPLIER);
 
     if (sizeOfRead != sizeof(bufferToUse)) {
       ESP_LOGW(TAG, "Expected to get %d, got %d bytes instead",
@@ -56,8 +57,9 @@ void audioTask(void *pvParameters) {
     counter = counter + 1;
 
     ticks = ticks + (tickEnd - tickStart);
-    // taskYIELD();
 
+    // taskYIELD();
+    // why do i need it?
     vTaskDelay(1);
   }
 

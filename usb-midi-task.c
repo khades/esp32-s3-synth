@@ -1,3 +1,4 @@
+#include "clap/events.h"
 #include "esp_log.h"
 #include "usb-midi.h"
 
@@ -26,6 +27,6 @@ void usbMidiTask(void *pvParameters) {
     counter = counter + 1;
 
     ticks = ticks + (tickEnd - tickStart);
-    taskYIELD();
+    vTaskDelay(1);
   }
 }

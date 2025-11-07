@@ -121,9 +121,9 @@ void app_main(void) {
   // rendering extra buffer to be sure we have one buffer full of data
   // and rendering missing part afterwards
 
-  audioStreamBuffer =
-      xStreamBufferCreate(FRAME_NUMBERS * AUDIO_CHANNELS * sizeof(int32_t),
-                          FRAME_NUMBERS * AUDIO_CHANNELS * sizeof(int32_t));
+  audioStreamBuffer = xStreamBufferCreate(
+      FRAME_NUMBERS * BUFFER_MULTIPLIER * AUDIO_CHANNELS * sizeof(int32_t),
+      FRAME_NUMBERS * AUDIO_CHANNELS * sizeof(int32_t));
 
   UsbMidi_onMidiMessage(&midi, onMidiMessage);
   UsbMidi_onDeviceConnected(&midi, onMidiDeviceConnected);
@@ -151,5 +151,5 @@ void app_main(void) {
               configMAX_PRIORITIES - 1, NULL);
 
   xTaskCreate(usbMidiTask, "usbmidi", 102400, (void *)&midi,
-              configMAX_PRIORITIES - 4, NULL);
+              configMAX_PRIORITIES - 1, NULL);
 }

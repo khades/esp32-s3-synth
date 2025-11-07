@@ -6,7 +6,8 @@
 
 // we need this amount of samples per cycle
 #define SAMPLES_PER_TICK (SAMPLE_RATE / configTICK_RATE_HZ)
-
+// should be 1
+#define BUFFER_MULTIPLIER 4
 #define AUDIO_BITS I2S_DATA_BIT_WIDTH_32BIT
 #define AUDIO_CHANNELS I2S_SLOT_MODE_STEREO
 // DMA FRAMENUM

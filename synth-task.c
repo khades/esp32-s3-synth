@@ -16,11 +16,11 @@ void synthTask(void *pvParameters) {
   const struct synthTaskContextStruct *taskContext = pvParameters;
 
   // streamBuffer output structure
-  uint32_t bufferToUse[FRAME_NUMBERS * AUDIO_CHANNELS];
+  uint32_t bufferToUse[FRAME_NUMBERS * BUFFER_MULTIPLIER * AUDIO_CHANNELS];
 
   // synth outputs
-  float left[FRAME_NUMBERS];
-  float right[FRAME_NUMBERS];
+  float left[FRAME_NUMBERS * BUFFER_MULTIPLIER];
+  float right[FRAME_NUMBERS * BUFFER_MULTIPLIER];
 
   float *output[AUDIO_CHANNELS] = {left, right};
 
@@ -85,7 +85,6 @@ void synthTask(void *pvParameters) {
     ticks = ticks + (tickEnd - tickStart);
     vTaskDelay(1);
 
-    // portYIELD();
     ESP_LOGD(TAG, "Sending done!");
   }
 

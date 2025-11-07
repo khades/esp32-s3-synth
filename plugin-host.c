@@ -8,7 +8,6 @@
 
 #include "esp_log.h"
 #include "plugins.h"
-#include "sine-ping.h"
 #include <stdio.h>
 
 #define PATH "Plugin host"
@@ -70,7 +69,7 @@ void plugins_activate(double sample_rate
   // WTF is max_frames_count???
   // in case of sine-ping it is not read
   for (int i = 0; i < PLUGINS_COUNT; i++) {
-    pluginRegistry[i]->activate(pluginRegistry[i], sample_rate, 0, 0);
+    pluginRegistry[i]->activate(pluginRegistry[i], sample_rate, 1, 127);
     pluginRegistry[i]->start_processing(pluginRegistry[i]);
     // maybe need it some times later, but not now
     // pluginRegistry[i]->get_extension()

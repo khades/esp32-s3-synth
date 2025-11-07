@@ -4,3 +4,12 @@
 [submodule "sine-ping"]
 	path = sine-ping
 	url = git@github.com:khades/sine-ping.git
+[submodule "clap-saw-demo"]
+	path = clap-saw-demo
+	url = https://github.com/surge-synthesizer/clap-saw-demo
+[submodule "clap-helpers"]
+	path = clap-helpers
+	url = https://github.com/free-audio/clap-helpers
+[submodule "readerwriterqueue"]
+	path = readerwriterqueue
+	url = https://github.com/cameron314/readerwriterqueue
